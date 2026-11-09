@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDGs 性別平權-情境題</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+        }
+
+        /* 遊樂園夢幻背景 */
+        .park-bg {
+            background: linear-gradient(180deg, #a0c4ff 0%, #caffbf 65%, #fdffb6 100%);
+        }
+
+        /* 摩天輪旋轉動畫 */
+        @keyframes ferrisRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .ferris-wheel-spin {
+            animation: ferrisRotate 40s linear infinite;
+            transform-origin: 50% 50%;
+        }
+
+        /* 漂浮雲朵與氣球動畫 */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(3deg); }
+        }
+        .floating-element {
+            animation: floatSlow 4s infinite ease-in-out;
+        }
+
+        /* 花朵閃爍微晃動 (吸引點擊) */
+        @keyframes flowerBounce {
+            0%, 100% { transform: scale(1) translateY(0); filter: drop-shadow(0 6px 10px rgba(0,0,0,0.25)); }
+            50% { transform: scale(1.15) translateY(-10px); filter: drop-shadow(0 12px 18px rgba(255, 105, 180, 0.6)); }
+        }
+        .flower-item {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: flowerBounce 2.5s infinite ease-in-out;
+        }
+        .flower-item:hover {
+            transform: scale(1.25) translateY(-12px) !important;
+            filter: drop-shadow(0 15px 22px rgba(255, 20, 147, 0.8)) !important;
+        }
+        .flower-item.completed {
+            animation: none;
+            opacity: 0.6;
+            filter: grayscale(0.6);
+            cursor: default;
+        }
+
+        /* 拖曳元件與放置目標區域 */
+        .draggable-card {
+            cursor: grab;
+            touch-action: none;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+        }
+        .draggable-card:active {
+            cursor: grabbing;
+            transform: scale(1.03);
+        }
+        .draggable-card.dragging {
+            opacity: 0.4;
+        }
+
+        .drop-zone {
+            transition: all 0.25s ease;
+            min-height: 140px;
+        }
+        .drop-zone.drag-over {
+            background-color: rgba(236, 72, 153, 0.15);
+            border-color: #ec4899;
+            transform: scale(1.02);
+        }
+
+        /* 玻璃擬態 header */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+        }
+    </style>
+</head>
+<body class="w-screen h-screen relative m-0 p-0 overflow-hidden flex flex-col park-bg">
+
+    <!-- 頂部頁首 (Header) -->
+    <header class="absolute top-0 left-0 right-0 z-20 px-4 py-3 md:px-8 flex justify-between items-center glass-panel shadow-md">
+        <!-- 左上角要求：標題「SDGs 性別平權-情境題」 -->
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 md:w-12 md:h-12 bg-purple-500 text-white rounded-2xl flex items-center justify-center text-xl md:text-2xl font-black shadow-md">
+                <i class="fa-solid fa-shapes"></i>
+            </div>
+            <div>
+                <h1 class="text-xl md:text-3xl font-black text-gray-800 tracking-wide">
+                    SDGs 性別平權-情境題
+                </h1>
+                <p class="text-xs md:text-sm text-purple-600 font-bold hidden sm:block">
+                    第二關：遊樂園情境配對與觀念分類
+                </p>
+            </div>
+        </div>
+
+        <!-- 右上角要求：答對題數顯示 (答對題數: X / 6) -->
+        <div class="flex items-center space-x-3 md:space-x-5">
+            <div class="bg-indigo-100 text-indigo-800 border border-indigo-200 px-3 py-1 rounded-xl text-center shadow-sm">
+                <span class="text-xs text-indigo-600 font-bold block">解鎖花朵</span>
+                <span id="flowers-progress" class="text-base font-black text-indigo-700">0 / 3</span>
+            </div>
+
+            <div class="bg-emerald-100 text-emerald-900 border border-emerald-300 px-4 py-1.5 rounded-xl text-center shadow-sm min-w-[120px]">
+                <span class="text-xs text-emerald-700 font-bold block">答對題數</span>
+                <span id="score-text" class="text-xl md:text-2xl font-black text-emerald-600">0 / 6</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主遊戲畫面 (遊樂園背景與動態景物) -->
+    <main id="game-scene" class="w-full h-full relative overflow-hidden">
+        
+        <!-- SVG 遊樂園景象 (上半部：摩天輪、旋轉木馬頂篷、雲朵、熱氣球) -->
+        <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+            
+            <!-- 遠景山脈 -->
+            <path d="M 0 450 Q 200 350, 450 420 T 900 380 T 1400 440 T 1920 400 L 1920 1080 L 0 1080 Z" fill="#95d5b2" opacity="0.7"/>
+
+            <!-- 摩天輪 (左上方背景) -->
+            <g transform="translate(140, 220)">
+                <!-- 支架 -->
+                <polygon points="100,100 60,250 140,250" fill="#7209b7" opacity="0.8"/>
+                <!-- 轉輪框架 -->
+                <g class="ferris-wheel-spin" style="transform-box: fill-box;">
+                    <circle cx="100" cy="100" r="90" fill="none" stroke="#f72585" stroke-width="6"/>
+                    <circle cx="100" cy="100" r="60" fill="none" stroke="#4cc9f0" stroke-width="4"/>
+                    <!-- 輻條 -->
+                    <line x1="100" y1="10" x2="100" y2="190" stroke="#4895ef" stroke-width="3"/>
+                    <line x1="10" y1="100" x2="190" y2="100" stroke="#4895ef" stroke-width="3"/>
+                    <line x1="36" y1="36" x2="164" y2="164" stroke="#4895ef" stroke-width="3"/>
+                    <line x1="164" y1="36" x2="36" y2="164" stroke="#4895ef" stroke-width="3"/>
+                    <!-- 車廂 -->
+                    <circle cx="100" cy="10" r="10" fill="#ffb703"/>
+                    <circle cx="190" cy="100" r="10" fill="#ffb703"/>
+                    <circle cx="100" cy="190" r="10" fill="#ffb703"/>
+                    <circle cx="10" cy="100" r="10" fill="#ffb703"/>
+                    <circle cx="164" cy="36" r="10" fill="#fb8500"/>
+                    <circle cx="36" cy="164" r="10" fill="#fb8500"/>
+                    <circle cx="164" cy="164" r="10" fill="#fb8500"/>
+                    <circle cx="36" cy="36" r="10" fill="#fb8500"/>
+                </g>
+                <circle cx="100" cy="100" r="12" fill="#7209b7"/>
+            </g>
+
+            <!-- 雲霄飛車軌道 (右上方背景) -->
+            <path d="M 600 350 C 750 150, 950 400, 1150 220 S 1450 350, 1750 250" fill="none" stroke="#ff4d6d" stroke-width="8" stroke-dasharray="10 4"/>
+            <path d="M 600 360 C 750 160, 950 410, 1150 230 S 1450 360, 1750 260" fill="none" stroke="#c9184a" stroke-width="4"/>
+
+            <!-- 漂浮熱氣球 -->
+            <g class="floating-element" transform="translate(750, 100)">
+                <path d="M 30 0 C 60 0, 60 40, 45 60 L 37 75 L 23 75 L 15 60 C 0 40, 0 0, 30 0 Z" fill="#ff70a6"/>
+                <rect x="25" y="82" width="10" height="10" fill="#7f5539" rx="2"/>
+                <line x1="26" y1="75" x2="26" y2="82" stroke="#52b788" stroke-width="1.5"/>
+                <line x1="34" y1="75" x2="34" y2="82" stroke="#52b788" stroke-width="1.5"/>
+            </g>
+
+            <!-- 遊樂園綠色草地地面 (網頁下半部) -->
+            <path d="M 0 520 Q 480 470, 960 520 T 1920 490 L 1920 1080 L 0 1080 Z" fill="#52b788"/>
+            <path d="M 0 600 Q 600 550, 1200 610 T 1920 580 L 1920 1080 L 0 1080 Z" fill="#40916c"/>
+        </svg>
+
+        <!-- 3 個花朵隨機生成容器 (定位在下半部) -->
+        <div id="flowers-container" class="w-full h-full relative z-10"></div>
+    </main>
+
+    <!-- 底部操作提示標籤 -->
+    <footer class="absolute bottom-3 left-4 z-10 text-xs md:text-sm text-green-950 font-bold bg-white/75 px-4 py-1.5 rounded-full backdrop-blur-md shadow-sm border border-white/60 pointer-events-none">
+        🌸 點擊散佈在遊樂園草地上的 3 個花朵，進行「性別平等 / 不平等」觀念拖曳題！
+    </footer>
+
+    <!-- 拖曳題 Modal (Question Set Modal) -->
+    <div id="question-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-250">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-3xl w-[94%] shadow-2xl border-4 border-purple-300 relative transform scale-95 transition-transform duration-250 max-h-[90vh] overflow-y-auto" id="question-card">
+            
+            <!-- 標題與說明 -->
+            <div class="flex justify-between items-center mb-3">
+                <span id="modal-flower-badge" class="bg-purple-100 text-purple-800 px-3.5 py-1 rounded-full text-xs md:text-sm font-black border border-purple-200">
+                    🌸 花朵題組
+                </span>
+                <span class="text-xs text-gray-400 font-bold">請將 2 個行為或語句拖進正確框中</span>
+            </div>
+
+            <h3 class="text-base md:text-lg font-black text-gray-800 mb-4 text-center bg-purple-50 py-2 rounded-xl border border-purple-100">
+                👇 按住並拖拽下列行為卡片，放入對應的類別框中：
+            </h3>
+
+            <!-- 待拖曳選項卡片區域 -->
+            <div id="cards-source" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6 min-h-[90px] p-3 bg-gray-100 rounded-2xl border-2 border-dashed border-gray-300">
+                <!-- 由 JS 動態渲染待拖曳項目 -->
+            </div>
+
+            <!-- 兩個放置目標框：性別平等 / 性別不平等 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- 左框：性別平等 -->
+                <div class="flex flex-col">
+                    <div class="bg-emerald-500 text-white font-black py-2 px-4 rounded-t-2xl text-center flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-circle-check"></i> 性別平等 (Gender Equality)
+                    </div>
+                    <div id="zone-equality" data-target="equality" class="drop-zone bg-emerald-50/60 border-2 border-emerald-300 rounded-b-2xl p-3 flex flex-col gap-2">
+                        <!-- 拖入卡片存放區 -->
+                    </div>
+                </div>
+
+                <!-- 右框：性別不平等 -->
+                <div class="flex flex-col">
+                    <div class="bg-rose-500 text-white font-black py-2 px-4 rounded-t-2xl text-center flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-circle-xmark"></i> 性別不平等 (Inequality)
+                    </div>
+                    <div id="zone-inequality" data-target="inequality" class="drop-zone bg-rose-50/60 border-2 border-rose-300 rounded-b-2xl p-3 flex flex-col gap-2">
+                        <!-- 拖入卡片存放區 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 提交回答按鈕 -->
+            <div class="flex justify-end gap-3">
+                <button id="btn-submit-set" class="bg-purple-600 hover:bg-purple-700 text-white font-black py-2.5 px-7 rounded-xl shadow-md active:scale-95 transition-all text-base disabled:opacity-50">
+                    確認送出 <i class="fa-solid fa-check ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結局等級結果 Modal (要求顯示於正中間) -->
+    <div id="result-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-[90%] text-center shadow-2xl border-4 relative overflow-hidden" id="result-card">
+            
+            <div id="result-badge-icon" class="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 text-5xl shadow-inner border-2">
+                <!-- 動態圖示 -->
+            </div>
+
+            <!-- 等級結果標題 (再加油 / 進步中 / 平權達人) -->
+            <h2 id="result-level-title" class="text-3xl font-black text-gray-800 mb-2"></h2>
+            <p id="result-level-desc" class="text-gray-600 text-sm mb-6 font-medium leading-relaxed"></p>
+
+            <!-- 統計卡 -->
+            <div class="bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100 shadow-inner">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-gray-500 font-bold">總情境題數：</span>
+                    <span class="text-gray-800 font-black">6 題</span>
+                </div>
+                <div class="flex justify-between items-center border-t border-gray-200 pt-2">
+                    <span class="text-gray-700 font-bold">答對總題數：</span>
+                    <span id="final-score-text" class="text-2xl font-black">0 / 6</span>
+                </div>
+            </div>
+
+            <!-- 按鈕按規則分分流：再次挑戰 vs 下載學習證書 (certificate.html) -->
+            <div id="result-button-area">
+                <!-- JS 動態渲染 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 邏輯腳本與 音效 -->
+    <script>
+        // ----------------------------------------------------
+        // 1. Web Audio API 音效產生器
+        // ----------------------------------------------------
+        class SoundEffects {
+            constructor() { this.ctx = null; }
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+            }
+            playPop() {
+                this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(450, now);
+                osc.frequency.exponentialRampToValueAtTime(850, now + 0.07);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.07);
+            }
+            playDrop() {
+                this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.linearRampToValueAtTime(500, now + 0.1);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            }
+            playFanfare() {
+                this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    gain.gain.setValueAtTime(0.3, now + idx * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.35);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.1);
+                    osc.stop(now + idx * 0.1 + 0.35);
+                });
+            }
+        }
+        const sfx = new SoundEffects();
+
+        // ----------------------------------------------------
+        // 2. 三個花朵題組（每組 2 題，總共 6 題觀念）
+        // ----------------------------------------------------
+        const FLOWER_SETS = [
+            {
+                setId: 1,
+                flowerColor: "#ff70a6",
+                name: "櫻花朵",
+                items: [
+                    {
+                        id: "item_1_1",
+                        text: "學校選拔科技代表隊時，不論男女性別均提供平等培訓與參賽機會。",
+                        correctType: "equality" // 性別平等
+                    },
+                    {
+                        id: "item_1_2",
+                        text: "認為「男生不可以玩娃娃，女生不可以玩汽車玩具」。",
+                        correctType: "inequality" // 性別不平等
+                    }
+                ]
+            },
+            {
+                setId: 2,
+                flowerColor: "#ff9770",
+                name: "太陽花",
+                items: [
+                    {
+                        id: "item_2_1",
+                        text: "爸爸媽媽共同分擔家務與照顧弟弟妹妹的責任。",
+                        correctType: "equality"
+                    },
+                    {
+                        id: "item_2_2",
+                        text: "公司招聘高階主管時，優先剔除已婚或準備生育的女性求職者。",
+                        correctType: "inequality"
+                    }
+                ]
+            },
+            {
+                setId: 3,
+                flowerColor: "#70d6ff",
+                name: "風信子",
+                items: [
+                    {
+                        id: "item_3_1",
+                        text: "在網路上嘲笑他人的性別氣質，並散佈性別歧視言論。",
+                        correctType: "inequality"
+                    },
+                    {
+                        id: "item_3_2",
+                        text: "職場實施「同工同酬」，相同職位與價值的男女員工獲得同等薪資待遇。",
+                        correctType: "equality"
+                    }
+                ]
+            }
+        ];
+
+        // ----------------------------------------------------
+        // 3. 遊戲狀態
+        // ----------------------------------------------------
+        let completedFlowers = [false, false, false];
+        let setScores = [0, 0, 0]; // 每個題组答對幾題 (最多 2)
+        let activeSetIndex = null;
+        let draggedElement = null;
+
+        const flowersContainer = document.getElementById('flowers-container');
+        const scoreText = document.getElementById('score-text');
+        const flowersProgress = document.getElementById('flowers-progress');
+
+        const questionModal = document.getElementById('question-modal');
+        const questionCard = document.getElementById('question-card');
+        const modalFlowerBadge = document.getElementById('modal-flower-badge');
+        const cardsSource = document.getElementById('cards-source');
+        const zoneEquality = document.getElementById('zone-equality');
+        const zoneInequality = document.getElementById('zone-inequality');
+        const btnSubmitSet = document.getElementById('btn-submit-set');
+
+        const resultModal = document.getElementById('result-modal');
+        const resultCard = document.getElementById('result-card');
+        const resultBadgeIcon = document.getElementById('result-badge-icon');
+        const resultLevelTitle = document.getElementById('result-level-title');
+        const resultLevelDesc = document.getElementById('result-level-desc');
+        const finalScoreText = document.getElementById('final-score-text');
+        const resultButtonArea = document.getElementById('result-button-area');
+
+        // ----------------------------------------------------
+        // 4. 下半部隨機散佈 3 個花朵 (要求：下半部與隨機位置)
+        // ----------------------------------------------------
+        function spawnFlowersRandomly() {
+            flowersContainer.innerHTML = '';
+
+            // 確保 3 個花朵均勻分布在下半部 (Top: 55% ~ 82%, Left: 15% ~ 82%)
+            const zones = [
+                { minL: 12, maxL: 32, minT: 58, maxT: 80 },
+                { minL: 42, maxL: 60, minT: 55, maxT: 78 },
+                { minL: 70, maxL: 86, minT: 60, maxT: 82 }
+            ];
+
+            FLOWER_SETS.forEach((flowerData, idx) => {
+                const z = zones[idx];
+                const randomLeft = Math.floor(Math.random() * (z.maxL - z.minL) + z.minL);
+                const randomTop = Math.floor(Math.random() * (z.maxT - z.minT) + z.minT);
+
+                const flowerDiv = document.createElement('div');
+                flowerDiv.className = `flower-item absolute w-24 h-24 md:w-28 md:h-28 flex flex-col items-center justify-center ${completedFlowers[idx] ? 'completed' : ''}`;
+                flowerDiv.style.left = `${randomLeft}%`;
+                flowerDiv.style.top = `${randomTop}%`;
+
+                // SVG 漂亮花朵圖示
+                flowerDiv.innerHTML = `
+                    <div class="relative w-full h-full flex flex-col items-center justify-center pointer-events-auto">
+                        <svg viewBox="0 0 100 100" class="w-full h-full">
+                            <!-- 花瓣 (5瓣) -->
+                            <g fill="${flowerData.flowerColor}" stroke="#ffffff" stroke-width="2">
+                                <circle cx="50" cy="25" r="18" />
+                                <circle cx="73" cy="42" r="18" />
+                                <circle cx="64" cy="70" r="18" />
+                                <circle cx="36" cy="70" r="18" />
+                                <circle cx="27" cy="42" r="18" />
+                            </g>
+                            <!-- 花心 -->
+                            <circle cx="50" cy="50" r="16" fill="#ffb703" stroke="#fb8500" stroke-width="3"/>
+                            <!-- 笑容眼睛 -->
+                            <circle cx="44" cy="47" r="2.5" fill="#000"/>
+                            <circle cx="56" cy="47" r="2.5" fill="#000"/>
+                            <path d="M 44 54 Q 50 60, 56 54" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <div class="absolute -bottom-2 bg-white/90 text-purple-900 font-black text-[11px] px-2 py-0.5 rounded-full border border-purple-200 shadow-sm">
+                            ${flowerData.name}
+                        </div>
+                    </div>
+                `;
+
+                flowerDiv.addEventListener('click', () => {
+                    if (!completedFlowers[idx]) {
+                        sfx.playPop();
+                        openFlowerQuestionModal(idx);
+                    }
+                });
+
+                flowersContainer.appendChild(flowerDiv);
+            });
+        }
+
+        // ----------------------------------------------------
+        // 5. 打開題組 Modal 與拖曳邏輯 Setup
+        // ----------------------------------------------------
+        function openFlowerQuestionModal(setIdx) {
+            activeSetIndex = setIdx;
+            const setData = FLOWER_SETS[setIdx];
+
+            modalFlowerBadge.textContent = `🌸 ${setData.name} (第 ${setIdx + 1} 個題組)`;
+            
+            // 重置容器
+            cardsSource.innerHTML = '';
+            zoneEquality.innerHTML = '';
+            zoneInequality.innerHTML = '';
+
+            // 渲染該組 2 個行為項目
+            setData.items.forEach(item => {
+                const card = document.createElement('div');
+                card.id = item.id;
+                card.dataset.correctType = item.correctType;
+                card.draggable = true;
+                card.className = 'draggable-card bg-white p-3.5 rounded-xl border-2 border-purple-200 shadow-sm font-bold text-gray-800 text-xs md:text-sm flex items-center justify-between gap-2';
+                card.innerHTML = `
+                    <span>${item.text}</span>
+                    <i class="fa-solid fa-grip-vertical text-purple-300"></i>
+                `;
+
+                // 註冊 Drag & Touch 事件
+                setupDragEvents(card);
+                cardsSource.appendChild(card);
+            });
+
+            // 顯示 Modal
+            questionModal.classList.remove('hidden');
+            setTimeout(() => {
+                questionModal.classList.remove('opacity-0');
+                questionCard.classList.remove('scale-95');
+                questionCard.classList.add('scale-100');
+            }, 20);
+        }
+
+        // 設置 HTML5 Drag and Drop & Touch 相容性
+        function setupDragEvents(card) {
+            card.addEventListener('dragstart', (e) => {
+                draggedElement = card;
+                card.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', card.id);
+            });
+
+            card.addEventListener('dragend', () => {
+                card.classList.remove('dragging');
+                draggedElement = null;
+            });
+        }
+
+        // 放置區域註冊監聽
+        [zoneEquality, zoneInequality, cardsSource].forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                if (draggedElement) {
+                    zone.appendChild(draggedElement);
+                    sfx.playDrop();
+                }
+            });
+        });
+
+        // ----------------------------------------------------
+        // 6. 送出本題組回答並計算答對題數
+        // ----------------------------------------------------
+        btnSubmitSet.addEventListener('click', () => {
+            const setData = FLOWER_SETS[activeSetIndex];
+            
+            // 檢查是否卡片皆已拖入框中
+            const remainingCards = cardsSource.children.length;
+            if (remainingCards > 0) {
+                alert("請將所有行為卡片拖入「性別平等」或「性別不平等」框中！");
+                return;
+            }
+
+            let correctCountInSet = 0;
+
+            // 檢查左框 (equality)
+            Array.from(zoneEquality.children).forEach(card => {
+                if (card.dataset.correctType === 'equality') {
+                    correctCountInSet++;
+                }
+            });
+
+            // 檢查右框 (inequality)
+            Array.from(zoneInequality.children).forEach(card => {
+                if (card.dataset.correctType === 'inequality') {
+                    correctCountInSet++;
+                }
+            });
+
+            // 更新遊戲進度
+            completedFlowers[activeSetIndex] = true;
+            setScores[activeSetIndex] = correctCountInSet;
+
+            updateScoreboard();
+
+            // 關閉題組 Modal
+            questionModal.classList.add('opacity-0');
+            questionCard.classList.add('scale-95');
+
+            setTimeout(() => {
+                questionModal.classList.add('hidden');
+                spawnFlowersRandomly();
+
+                // 檢查是否 3 個花朵全部做答結束 (要求：6 題全部做答結束)
+                if (completedFlowers.every(Boolean)) {
+                    showFinalResultModal();
+                }
+            }, 250);
+        });
+
+        // 更新頂部分數與花朵數
+        function updateScoreboard() {
+            const completedCount = completedFlowers.filter(Boolean).length;
+            const totalCorrect = setScores.reduce((a, b) => a + b, 0);
+
+            flowersProgress.textContent = `${completedCount} / 3`;
+            scoreText.textContent = `${totalCorrect} / 6`;
+        }
+
+        // ----------------------------------------------------
+        // 7. 6 題全部做答結束：顯示結果等級 Modal (要求規則)
+        // ----------------------------------------------------
+        function showFinalResultModal() {
+            const totalCorrect = setScores.reduce((a, b) => a + b, 0);
+            finalScoreText.textContent = `${totalCorrect} / 6`;
+
+            // 依答對題數給予等級：
+            // Correct <= 3: 再加油 -> 「再次挑戰」按鈕
+            // Correct 4 ~ 5: 進步中 -> 「再次挑戰」按鈕
+            // Correct = 6: 平權達人 -> 「下載學習證書」按鈕 (certificate.html)
+            
+            if (totalCorrect === 6) {
+                sfx.playFanfare();
+                resultCard.className = "bg-white rounded-3xl p-8 max-w-md w-[90%] text-center shadow-2xl border-4 border-yellow-400 relative overflow-hidden";
+                resultBadgeIcon.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 text-5xl shadow-inner border-2 bg-yellow-100 text-yellow-600 border-yellow-300";
+                resultBadgeIcon.innerHTML = `<i class="fa-solid fa-award"></i>`;
+                
+                resultLevelTitle.textContent = "平權達人";
+                resultLevelTitle.className = "text-3xl font-black text-amber-600 mb-2 tracking-wide";
+                resultLevelDesc.textContent = "太厲害了！6 道情境題完全答對！您已精準掌握 SDGs 性別平權的核心精神！";
+
+                resultButtonArea.innerHTML = `
+                    <a href="certificate.html" class="block w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-black py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-95 text-lg">
+                        <i class="fa-solid fa-certificate mr-2"></i> 下載學習證書
+                    </a>
+                `;
+            } else if (totalCorrect >= 4) {
+                resultCard.className = "bg-white rounded-3xl p-8 max-w-md w-[90%] text-center shadow-2xl border-4 border-blue-400 relative overflow-hidden";
+                resultBadgeIcon.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 text-5xl shadow-inner border-2 bg-blue-100 text-blue-600 border-blue-300";
+                resultBadgeIcon.innerHTML = `<i class="fa-solid fa-thumbs-up"></i>`;
+
+                resultLevelTitle.textContent = "進步中";
+                resultLevelTitle.className = "text-3xl font-black text-blue-600 mb-2 tracking-wide";
+                resultLevelDesc.textContent = "表現不錯喔！已經答對大部分情境，再接再勵挑戰全對拿下「平權達人」稱號吧！";
+
+                resultButtonArea.innerHTML = `
+                    <button onclick="window.location.reload()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-95 text-lg">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> 再次挑戰
+                    </button>
+                `;
+            } else {
+                resultCard.className = "bg-white rounded-3xl p-8 max-w-md w-[90%] text-center shadow-2xl border-4 border-rose-400 relative overflow-hidden";
+                resultBadgeIcon.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 text-5xl shadow-inner border-2 bg-rose-100 text-rose-600 border-rose-300";
+                resultBadgeIcon.innerHTML = `<i class="fa-solid fa-seedling"></i>`;
+
+                resultLevelTitle.textContent = "再加油";
+                resultLevelTitle.className = "text-3xl font-black text-rose-600 mb-2 tracking-wide";
+                resultLevelDesc.textContent = "答對題數較少喔！別灰心，讓我們重新檢視性別平等情境並重新挑戰！";
+
+                resultButtonArea.innerHTML = `
+                    <button onclick="window.location.reload()" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-black py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-95 text-lg">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> 再次挑戰
+                    </button>
+                `;
+            }
+
+            // 顯示畫面正中間
+            setTimeout(() => {
+                resultModal.classList.remove('hidden');
+                setTimeout(() => {
+                    resultModal.classList.remove('opacity-0');
+                }, 50);
+            }, 300);
+        }
+
+        // ----------------------------------------------------
+        // 8. 網頁初始化
+        // ----------------------------------------------------
+        window.onload = () => {
+            spawnFlowersRandomly();
+            updateScoreboard();
+        };
+    </script>
+</body>
+</html>

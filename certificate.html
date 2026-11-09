@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陳渝SDGs 性別平權小達人 - 學習證書</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .font-serif-tc {
+            font-family: 'Noto Serif TC', serif;
+        }
+
+        /* 證書奢華金色邊框與勳章樣式 */
+        .certificate-border {
+            border: 12px double #d4af37;
+            background: radial-gradient(circle at center, #ffffff 0%, #fffdf5 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        }
+
+        /* 水印花紋 */
+        .watermark-bg {
+            background-image: radial-gradient(#e5c76b 0.75px, transparent 0.75px);
+            background-size: 24px 24px;
+            opacity: 0.15;
+        }
+
+        /* 專利列印媒體查詢設定 (@media print) */
+        @media print {
+            body {
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .certificate-container {
+                box-shadow: none !important;
+                border-width: 8px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                page-break-inside: avoid;
+            }
+            /* 列印時將 Input 輸入框隱藏，改直接呈現文字 */
+            .name-input-field {
+                display: none !important;
+            }
+            .name-print-display {
+                display: inline-block !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4 flex flex-col items-center justify-center">
+
+    <!-- 頂部頁面導航與操作工具列 (列印時自動隱藏) -->
+    <div class="no-print w-full max-w-4xl mb-6 flex flex-wrap justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
+        <a href="level2.html" class="inline-flex items-center text-purple-700 font-bold hover:text-purple-900 transition-colors">
+            <i class="fa-solid fa-arrow-left mr-2"></i> 返回第二關遊戲
+        </a>
+
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-500 font-bold hidden sm:block">填寫姓名後即可下載存檔：</span>
+            <!-- 下載證書按鈕 (執行 window.print()) -->
+            <button onclick="triggerDownloadPrint()" class="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-black py-2.5 px-6 rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-download"></i> 下載證書 (列印 / 存為 PDF)
+            </button>
+        </div>
+    </div>
+
+    <!-- 證書主體卡片 -->
+    <div class="certificate-container certificate-border relative w-full max-w-4xl rounded-3xl p-8 md:p-14 text-center overflow-hidden">
+        
+        <!-- 背景裝飾水印 -->
+        <div class="absolute inset-0 watermark-bg pointer-events-none"></div>
+
+        <!-- 證書角落奢華花紋裝飾 -->
+        <div class="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-amber-500 rounded-tl-xl pointer-events-none"></div>
+        <div class="absolute top-4 right-4 w-12 h-12 border-t-4 border-r-4 border-amber-500 rounded-tr-xl pointer-events-none"></div>
+        <div class="absolute bottom-4 left-4 w-12 h-12 border-b-4 border-l-4 border-amber-500 rounded-bl-xl pointer-events-none"></div>
+        <div class="absolute bottom-4 right-4 w-12 h-12 border-b-4 border-r-4 border-amber-500 rounded-br-xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col items-center">
+            
+            <!-- 頂部徽章與圖示 -->
+            <div class="w-20 h-20 bg-gradient-to-tr from-amber-400 to-yellow-300 rounded-full flex items-center justify-center text-amber-900 text-4xl shadow-md border-4 border-white mb-4">
+                <i class="fa-solid fa-medal"></i>
+            </div>
+
+            <p class="text-xs md:text-sm font-black tracking-widest text-amber-700 uppercase mb-1">
+                UNITED NATIONS SDGs GOAL 5: GENDER EQUALITY
+            </p>
+
+            <!-- 官方證書稱號 (要求：陳渝SDGs 性別平權小達人) -->
+            <h1 class="text-2xl md:text-4xl font-black text-gray-900 font-serif-tc tracking-wider mb-6 text-amber-800">
+                陳渝SDGs 性別平權小達人
+            </h1>
+
+            <div class="w-24 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent mb-8"></div>
+
+            <p class="text-sm md:text-base text-gray-600 font-bold mb-3">
+                茲證明學習學員：
+            </p>
+
+            <!-- 使用者輸入姓名區域 (畫面顯示 Input，列印時自動轉換) -->
+            <div class="mb-6 w-full max-w-md">
+                <input type="text" id="user-name-input" 
+                       placeholder="請點擊此處輸入您的姓名" 
+                       class="name-input-field w-full text-center text-xl md:text-3xl font-black text-purple-900 border-b-4 border-amber-400 focus:border-purple-600 outline-none bg-transparent py-2 transition-all placeholder:text-gray-300 placeholder:font-normal font-serif-tc"
+                       oninput="syncPrintName(this.value)">
+                
+                <!-- 列印時呈現的純文字 -->
+                <span id="name-print-text" class="name-print-display hidden text-2xl md:text-3xl font-black text-purple-900 border-b-2 border-amber-500 px-6 py-1 font-serif-tc">
+                    (學員姓名)
+                </span>
+            </div>
+
+            <!-- 證書表彰內文 -->
+            <p class="text-sm md:text-lg text-gray-700 leading-relaxed font-bold max-w-2xl mb-10">
+                順利通關「SDGs 性別平權」全數關卡，成功突破平權村莊探險與遊樂園情境考驗，具備卓越之性別平等意識與實踐精神，特頒此證以資鼓勵。
+            </p>
+
+            <!-- 證書落款與印章 -->
+            <div class="w-full flex justify-between items-end border-t border-amber-200 pt-6 px-4 md:px-10">
+                <div class="text-left">
+                    <p class="text-xs text-gray-400 font-bold block mb-1">認證單位</p>
+                    <p class="text-xs md:text-sm font-black text-gray-800">SDGs 永續平權推動小組</p>
+                </div>
+
+                <!-- 金色印章圖示 -->
+                <div class="w-16 h-16 md:w-20 md:h-20 border-4 border-red-600 text-red-600 rounded-full flex items-center justify-center font-black text-[10px] md:text-xs tracking-tighter transform -rotate-12 opacity-85 shadow-sm">
+                    性別平權<br>認證章
+                </div>
+
+                <div class="text-right">
+                    <p class="text-xs text-gray-400 font-bold block mb-1">頒發日期</p>
+                    <p id="issue-date" class="text-xs md:text-sm font-black text-gray-800">2026 年 -- 月 -- 日</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 頁尾提示 -->
+    <p class="no-print text-xs text-gray-400 mt-6 font-bold">
+        💡 提示：點擊「下載證書」即可使用瀏覽器的列印功能另存為 PDF 電子檔案。
+    </p>
+
+    <script>
+        // 自動帶入當前日期
+        window.onload = () => {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('issue-date').textContent = `${year} 年 ${month} 月 ${day} 日`;
+        };
+
+        // 將輸入框內容即時同步至列印文字節點
+        function syncPrintName(nameVal) {
+            const printDisplay = document.getElementById('name-print-text');
+            if (nameVal.trim() !== '') {
+                printDisplay.textContent = nameVal.trim();
+            } else {
+                printDisplay.textContent = "(學員姓名)";
+            }
+        }
+
+        // 下載/列印按鈕點擊觸發 window.print()
+        function triggerDownloadPrint() {
+            const inputField = document.getElementById('user-name-input');
+            if (!inputField.value.trim()) {
+                if(!confirm("您尚未填寫姓名，確定要直接列印證書嗎？")) {
+                    inputField.focus();
+                    return;
+                }
+            }
+            // 觸發列印功能 (存為 PDF 或列印)
+            window.print();
+        }
+    </script>
+</body>
+</html>
